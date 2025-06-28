@@ -20,7 +20,7 @@ def main():
     - Execute Python files with optional arguments
     - Write or overwrite files
 
-    All paths you provide hould be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
+    All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
     """
 
     load_dotenv()
@@ -105,7 +105,7 @@ def main():
         ]
     )
 
-    def call_function(function_call_part, verbose=False):
+    def call_function(function_call_part, verbose=True):
         function_name = function_call_part.name
         args = function_call_part.args
 
@@ -144,34 +144,43 @@ def main():
                 )
             ]
         )
-        
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions], system_instruction=system_prompt
-            ),
-    )
+    
+    RUN_LIMIT = 20
+    for i in range(RUN_LIMIT):
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-001",
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions], system_instruction=system_prompt
+                ),
+        )
 
-    for function_call_part in response.function_calls:
+        for candidate in response.candidates:
+            messages.append(candidate.content)
+        
+        if response.function_calls == None or i == RUN_LIMIT:
+            print(f"{i}. **{response.text}")
+            break
+        
+        for function_call_part in response.function_calls:
+            function_call_result = call_function(function_call_part)
+
+            if function_call_result.parts[0].function_response.response == None:
+                raise Exception("Error: No result")
+
+            messages.append(str(function_call_result.parts[0].function_response.response))
+        
+        #print(f"{i}. **{messages}")
+
+
+    '''for function_call_part in response.function_calls:
         function_call_result = call_function(function_call_part)
 
         if function_call_result.parts[0].function_response.response == None:
-            raise Exception("Your shit's fucked up")
+            raise Exception("Error: Your shit's fucked up")
         
         if sys.argv[-1] == "--verbose":
-            print(f"-> {function_call_result.parts[0].function_response.response}")
-
-    '''if response.function_calls != None:
-        for function_call_part in response.function_calls:
-            print(f"Calling function: {function_call_part.name}({function_call_part.args})")
-    else:
-        print(response.text)
-
-        if sys.argv[-1] == "--verbose":
-            print(f"User prompt: {user_prompt}")
-            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")'''
+            print(f"-> {function_call_result.parts[0].function_response.response}")'''
 
 if __name__ == "__main__":
     main()

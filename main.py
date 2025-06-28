@@ -105,7 +105,7 @@ def main():
         ]
     )
 
-    def call_function(function_call_part, verbose=True):
+    def call_function(function_call_part, verbose=False):
         function_name = function_call_part.name
         args = function_call_part.args
 
@@ -169,8 +169,6 @@ def main():
                 raise Exception("Error: No result")
 
             messages.append(str(function_call_result.parts[0].function_response.response))
-        
-        #print(f"{i}. **{messages}")
 
 
     '''for function_call_part in response.function_calls:

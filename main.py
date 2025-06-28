@@ -113,7 +113,7 @@ def main():
             print(f"Calling function: {function_name}({args})")
         print(f" - Calling function: {function_name}")
 
-        args["working_directory"] = "./calculator"
+        args["working_directory"] = "./"
 
         functions = {
             "get_files_info": get_files_info,
